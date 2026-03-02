@@ -68,10 +68,10 @@ export class User {
   @Prop({
     type: String,
   })
-  validationCode: string;
+  verificationCode: string;
 
   @Prop({
-    type: Date,
+    type: String,
     enum: ['male', 'female'],
   })
   gender: string;
