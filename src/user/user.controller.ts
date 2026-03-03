@@ -10,12 +10,14 @@ import {
   UseGuards,
   Request,
   Req,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { Roles } from './decorators/user.decorator';
+import * as userQueryModel from './models/user-query.model';
 
 @Controller('v1/users')
 export class UserController {
@@ -49,8 +51,13 @@ export class UserController {
    * @access Admin only
    */
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  @Roles(['admin'])
+  @UseGuards(AuthGuard)
+  findAll(
+    @Query()
+    query: userQueryModel.UserQuery,
+  ) {
+    return this.userService.findAll(query);
   }
 
   /**  * Get a user by ID

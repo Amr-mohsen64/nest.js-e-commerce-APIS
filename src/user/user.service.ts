@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './user.schema';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { UserQuery } from './models/user-query.model';
 
 const saltOrRounds = 10;
 
@@ -45,8 +46,35 @@ export class UserService {
     };
   }
 
-  findAll() {
-    return this.userModel.find().select('-password -__v');
+  async findAll(query: UserQuery) {
+    const { name, email, role, limit = 10, page = 1, sort = 'asc' } = query;
+    console.log(page, 'page', limit, 'limit', sort, 'sort');
+
+    if (Number.isNaN(Number(+limit))) {
+      throw new HttpException('Limit must be a number', 400);
+    }
+    if (Number.isNaN(Number(+page))) {
+      throw new HttpException('Page must be a number', 400);
+    }
+    if (sort !== 'asc' && sort !== 'desc') {
+      throw new HttpException('Sort must be either asc or desc', 400);
+    }
+    const users = await this.userModel
+      .find()
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .where(name ? { name: new RegExp(name, 'i') } : {})
+      .where(email ? { email: new RegExp(email, 'i') } : {})
+      .where(role ? { role } : {})
+      .sort({ createdAt: sort === 'asc' ? 1 : -1 })
+      .select('-password -__v')
+      .exec();
+
+    return {
+      length: users.length,
+      status: 200,
+      data: users,
+    };
   }
 
   async findOne(id: string) {
